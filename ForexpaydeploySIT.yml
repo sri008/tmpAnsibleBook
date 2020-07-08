@@ -1,0 +1,36 @@
+---
+#Deploy in SIT environment
+- name: Export war to SIT environment
+  hosts: SIT
+  become: yes
+  tasks:
+    - name: Download Script 
+      get_url:
+        url: https://raw.githubusercontent.com/sri008/ForexPay/master/latestPackage.sh
+        dest: /opt
+    - name: Make it executable
+      file:
+        path: /opt/latestPackage.sh
+        mode: '777'
+    - name: Run the script to download latest Package
+      script: 
+        cmd: /bin/sh /opt/latestPackage.sh
+      args:
+        chdir: /opt/SIT/
+    - name: change file permission
+      command: "chmod -R 777 /opt/SIT/"
+      become: yes
+    - name:
+      get_url:
+        url: https://raw.githubusercontent.com/sri008/ForexPay/master/src/main/resources/application.properties
+        dest: /opt/SIT
+    - name: change the permission of properties files
+      file:
+        path: /opt/SIT/application.properties
+        mode: '644'
+    - name: Export Java Node Cookie
+      shell: nohup java -jar /opt/SIT/*.jar --spring.config.location=file:/opt/SIT/application.properties &
+      become: yes
+    #- name: run the swagger
+     # shell: nohup java -jar /opt/SIT/*.jar &
+     # become: yes
